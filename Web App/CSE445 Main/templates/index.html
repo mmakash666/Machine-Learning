@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obesity Prediction</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        .container { max-width: 500px; margin: auto; text-align: left; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0; }
+        button { padding: 10px; width: 100%; background: blue; color: white; border: none; }
+        .result-container { display: none; margin-top: 20px; padding: 10px; background: #f4f4f4; border-radius: 5px; }
+        #result { font-size: 20px; font-weight: bold; }
+        #dietChart { white-space: pre-wrap; text-align: left; }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Obesity Prediction</h2>
+        
+        <!-- Form -->
+        <form id="predictionForm">
+            <label for="Gender">Gender:</label>
+            <select id="Gender">
+                <option>Male</option>
+                <option>Female</option>
+            </select>
+
+            <label for="Age">Age:</label>
+            <input type="number" id="Age" placeholder="Enter your age" required>
+
+            <label for="Height">Height (cm):</label>
+            <input type="number" id="Height" placeholder="Enter your height in cm" required>
+
+            <label for="Weight">Weight (kg):</label>
+            <input type="number" id="Weight" placeholder="Enter your weight in kg" required>
+
+            <label for="Vegetable_Frequency">Frequency of Consumption of Vegetables (1 to 3):</label>
+            <input type="number" id="Vegetable_Frequency" min="1" max="3" placeholder="Enter 1, 2, or 3" required>
+
+            <label for="BMR">BMR (Basal Metabolic Rate):</label>
+            <input type="number" id="BMR" placeholder="Enter your BMR" required>
+
+            <label for="Nutritional_Score">Nutritional Score:</label>
+            <input type="number" id="Nutritional_Score" placeholder="Enter nutritional score" required>
+
+            <button type="button" onclick="makePrediction()">Predict</button>
+        </form>
+
+        <!-- RESULT & DIET CHART CONTAINER (Separate from form) -->
+        <div class="result-container">
+            <p id="result"></p>
+            <div id="dietChart-container">
+                <h3>Diet Chart</h3>
+                <pre id="dietChart"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function makePrediction() {
+            let inputData = {
+                "Gender": document.getElementById("Gender").value,
+                "Age": parseInt(document.getElementById("Age").value),
+                "Height": parseFloat(document.getElementById("Height").value),
+                "Weight": parseFloat(document.getElementById("Weight").value),
+                "Frequency of consumption of vegetables": parseInt(document.getElementById("Vegetable_Frequency").value),
+                "BMR": parseFloat(document.getElementById("BMR").value),
+                "Nutritional_Score": parseFloat(document.getElementById("Nutritional_Score").value)
+            };
+
+            fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(inputData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Server returned an error.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.prediction) {
+                    // Update prediction result separately
+                    document.getElementById("result").innerHTML = `<strong>Prediction:</strong> ${data.prediction}`;
+
+                    // Update diet chart separately
+                    document.getElementById("dietChart").innerText = data.diet_chart;
+
+                    // Show result and diet chart
+                    document.querySelector(".result-container").style.display = "block";
+                } else {
+                    throw new Error("Invalid JSON response from server.");
+                }
+            })
+            .catch(error => {
+                document.getElementById("result").innerText = "Error: " + error.message;
+            });
+        }
+    </script>
+</body>
+</html>
